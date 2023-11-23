@@ -1,0 +1,24 @@
+Looking to include 3 extra cameras if possible
+positions as follows
+
+1.Looking down on lowest motor centering ring
+size issues:11mm from outer diameter of motor to inner diameter of airframe
+(76mm, 54mm)
+
+2.Looking up from highest motor centering ring
+size issues:11mm from outer diameter of motor to inner diameter of airframe
+(76mm, 54mm)
+
+3.Looking horizontally from nosecose
+Easiest to fit, pinhole required during 3d print of nosecone if applicable
+
+
+Any good value cameras we have found so far fail to fit the criteria of 1 & 2
+
+Spy pens a good next step to look at
+i.e.
+https://www.amazon.co.uk/SANPROV-Cameras-Portable-Recording-Business/dp/B09ST6YK6H/ref=sr_1_5?keywords=spy+pen&qid=1700765934&sr=8-5
+but vertical camera rather than horizontal :^)
+
+
+-Isaac
