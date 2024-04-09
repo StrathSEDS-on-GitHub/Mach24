@@ -5,50 +5,22 @@ import datetime
 # Initialise MACC LaunchPad
 env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
 
+#launchday = (2024, 7, 10, 12) Approximate 
 launchday = datetime.date.today() + datetime.timedelta(days=1)
 
 env.set_date( (launchday.year, launchday.month, launchday.day, 9) )
 
 env.set_atmospheric_model(
-    type="Forecast", file="GFS"
+    # type="Forecast", file="GFS"
+    type="custom_atmosphere",
     
-    
-    # pressure=None,
-    # temperature=300,
-    # wind_u=[(0,5), (1000,10)], #Positive for East, Negative for West
-    # wind_v=[(0,-2), (500,3), (1600,2)], #Positive for North, Negative for South
+    pressure=None,
+    temperature=300,
+    wind_u=[(0,5), (500,10)], #Positive for East, Negative for West
+    wind_v=[(0,5), (500,10), (2000,20)], #Positive for North, Negative for South
 )
 
 #env.info()
-
-K1440ThurstCurve = [
-   0.015, 893.963,
-   0.026, 1563.355,
-   0.030, 1671.321,
-   0.035, 1718.827,
-   0.047, 1667.003,
-   0.063, 1628.135,
-   0.100, 1671.321,
-   0.200, 1701.552,
-   0.300, 1705.871,
-   0.400, 1710.189,
-   0.500, 1705.871,
-   0.600, 1701.552,
-   0.700, 1684.277,
-   0.800, 1658.366,
-   0.900, 1619.498,
-   1.000, 1597.904,
-   1.100, 1546.080,
-   1.221, 1498.575,
-   1.300, 1144.445,
-   1.337, 1062.39,
-   1.400, 1058.072,
-   1.447, 1053.753,
-   1.500, 716.898,
-   1.543, 578.700,
-   1.600, 306.625,
-   1.644, 125.241,
-   1.700, 0.0]
 
 #Info from OR
 length = 1.73
@@ -172,6 +144,7 @@ cansast_chute = cansat.add_parachute(
 
 stage_one = Flight(
     rocket=strath_with_payload,
+    name="Ascent",
     environment=env,
     rail_length=2,
     inclination=90,
@@ -181,6 +154,7 @@ stage_one = Flight(
 
 stage_two = Flight(
     rocket=strath_without_payload,
+    name="Rocket Descent",
     environment=env,
     rail_length=2,
     initial_solution=stage_one,
@@ -188,6 +162,7 @@ stage_two = Flight(
 
 payload_flight = Flight(
     rocket = cansat,
+    name="Payload Descent",
     environment = env,
     rail_length=2,
     initial_solution = stage_one,
@@ -204,7 +179,7 @@ comparison = CompareFlights(
     [stage_one, stage_two, payload_flight]
 )
 
-#comparison.trajectories_3d(legend=True)
+comparison.trajectories_3d(legend=True)
 
 stage_one.export_kml(
     file_name="ascent.kml",
