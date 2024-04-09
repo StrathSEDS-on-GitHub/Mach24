@@ -17,7 +17,7 @@ env.set_atmospheric_model(
     pressure=None,
     temperature=300,
     wind_u=[(0,5), (500,10)], #Positive for East, Negative for West
-    wind_v=[(0,5), (500,10), (2000,20)], #Positive for North, Negative for South
+    wind_v=[(0,0.1), (100,0.1)], #Positive for North, Negative for South
 )
 
 #env.info()
@@ -30,13 +30,13 @@ centre_of_mass = 1.02
 ### Motor Setup ###
 
 Pro54K1440 = SolidMotor(
-    thrust_source="./data/Cesaroni_K1440.eng",     #import
+    thrust_source="./Mechanical/RocketPy/data/Cesaroni_K1440.eng",     #import
     dry_mass=0.7302,
     dry_inertia=(0,0,0),
-    nozzle_radius=15 / 1000,                #find
+    nozzle_radius=52 / 2000,                #find
     grain_number=6,
     grain_density=1.129,                    #find
-    grain_outer_radius=54 / 2000,           #find
+    grain_outer_radius=52 / 2000,           #find
     grain_initial_inner_radius=15 / 1000,   #find
     grain_initial_height=142 / 1000,        #find
     grain_separation=5 / 1000,              #find
@@ -66,8 +66,8 @@ strath_with_payload = Rocket(
     mass=vehicle_mass + payload_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
-    power_off_drag="./data/powerOffDragCurve.CSV",
-    power_on_drag="./data/powerOnDragCurve.CSV",
+    power_off_drag="./Mechanical/RocketPy/data/powerOffDragCurve.CSV",
+    power_on_drag="./Mechanical/RocketPy/data/powerOnDragCurve.CSV",
     coordinate_system_orientation="tail_to_nose",
 )
 
@@ -76,8 +76,8 @@ strath_without_payload = Rocket(
     mass=vehicle_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
-    power_off_drag="./data/powerOffDragCurve.CSV",
-    power_on_drag="./data/powerOnDragCurve.CSV",
+    power_off_drag="./Mechanical/RocketPy/data/powerOffDragCurve.CSV",
+    power_on_drag="./Mechanical/RocketPy/data/powerOnDragCurve.CSV",
     coordinate_system_orientation="tail_to_nose",
 )
 
