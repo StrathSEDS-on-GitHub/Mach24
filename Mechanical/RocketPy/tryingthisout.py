@@ -27,7 +27,7 @@ length = 1.73
 centre_of_mass = 1.02
 
 
-
+### Motor Setup ###
 
 Pro54K1440 = SolidMotor(
     thrust_source="./data/Cesaroni_K1440.eng",     #import
@@ -58,6 +58,8 @@ Ixx = 0.25 * dry_mass * radius**2 + 1/12 * dry_mass * length**2
 Irr = 0.5 * dry_mass * radius**2
 main_diameter = 66 / 100
 drogue_diameter = 38.1 / 100
+
+### Vehicle Setup ###
 
 strath_with_payload = Rocket(
     radius=80 / 2000,
@@ -125,6 +127,8 @@ main = strath_without_payload.add_parachute(
 
 )
 
+### CanSat Setup ###
+
 cansat = Rocket(
     radius = 76 / 2000,
     mass = payload_mass,
@@ -141,6 +145,8 @@ cansast_chute = cansat.add_parachute(
     sampling_rate = 105,
     lag = 1.5,
 )
+
+### Simulations ###
 
 stage_one = Flight(
     rocket=strath_with_payload,
@@ -174,6 +180,8 @@ payload_flight = Flight(
 #     extrude=True,
 #     altitude_mode="relative_to_ground",
 # )
+
+### Display Flight Sim ###
 
 comparison = CompareFlights(
     [stage_one, stage_two, payload_flight]
