@@ -41,50 +41,101 @@ K1440ThurstCurve = [
    1.644, 125.241,
    1.700, 0.0]
 
+#Info from OR
+length = 1.73
+centre_of_mass = 1.02
+dry_mass = 5.978
+radius = 8 / 200
+Ixx = 0.25 * dry_mass * radius**2 + 1/12 * dry_mass * length**2
+Irr = 0.5 * dry_mass * radius**2
 
 
 Pro54K1440 = SolidMotor(
-    thrust_source=1440,  #"../data/Cesaroni_K1440.eng",     #import
+    thrust_source="./data/Cesaroni_K1440.eng",     #import
     dry_mass=0.7302,
-    dry_inertia=(0,0,0),                    #find
-    nozzle_radius=0 / 1000,                 #find
+    dry_inertia=(Ixx,Ixx,Irr),                    #find
+    nozzle_radius=15 / 1000,                 #find
     grain_number=6,
     grain_density=1.129,     #find
-    grain_outer_radius=33 / 1000,            #find
+    grain_outer_radius=54 / 2000,            #find
     grain_initial_inner_radius=15 / 1000,    #find
-    grain_initial_height=120 / 1000,        #find
+    grain_initial_height=142 / 1000,        #find
     grain_separation=5 / 1000,              #find
     grains_center_of_mass_position=0.3,       #find
     center_of_dry_mass_position=0.3,          #find
     nozzle_position=0,
     burn_time=1.65,
-    throat_radius=0 / 1000,                 #find
+    throat_radius=5 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber"
 )
 
-rocket = Rocket(
-    radius=80 / 1000,
+strath = Rocket(
+    radius=80 / 2000,
     mass=5.978,
-    inertia= (0,0,0),                       #find
-    power_off_drag="../data/powerOffDragCurve.CSV",
-    power_on_drag="../data/powerOnDragCurve.CSV",
+    inertia= (0,0,0),
+    power_off_drag="./data/powerOffDragCurve.CSV",
+    power_on_drag="./data/powerOnDragCurve.CSV",
     center_of_mass_without_motor=0,
     coordinate_system_orientation="tail_to_nose",
 )
 
-nosecone = rocket.add_nose(
+strath.add_motor(Pro54K1440, position=-(0.71-0.075))
+
+nosecone = strath.add_nose(
     length=0.3,
     kind="vonKarman",
-    position=1.02              #verify
+    position=centre_of_mass
 )
 
-fins = rocket.add_trapezoidal_fins(
+fins = strath.add_trapezoidal_fins(
     n=4,
     root_chord=16/ 100,
     tip_chord=6 / 100,
     span=6.3 / 100,
-    position=-0.48,      #verify
+    position=-(0.71-0.16),      #verify
     cant_angle=0
 )
 
-rocket.all_info()
+buttons = strath.set_rail_buttons(
+    upper_button_position=0.2,
+    lower_button_position=-0.2,
+    angular_position=45
+)
+
+drogue = strath.add_parachute(
+    name="drogue",
+    cd_s=0.8,
+    trigger="apogee",
+    
+)
+
+main = strath.add_parachute(
+    name="main",
+    cd_s=0.8,
+    trigger=300,
+
+)
+
+tail = strath.add_tail(
+    top_radius=8 / 200,
+    bottom_radius=5.5 / 200, #verify
+    length=7.5 / 100, #verify
+    position=-0.71 #verify
+)
+
+#rocket.all_info()
+
+print("\n Rocket Drawing:\n ____________")
+strath.draw()
+
+
+#print("Setting Up Test Flight")
+test_flight = Flight(
+    rocket=strath,
+    environment=env,
+    rail_length=2,
+    inclination=90,
+    heading=0,
+)
+#print("Test Flight Info")
+test_flight.plots.trajectory_3d()
