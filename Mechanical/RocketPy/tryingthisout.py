@@ -2,7 +2,7 @@ from rocketpy import Environment, SolidMotor, Rocket, Flight
 import datetime
 
 # Initialise MACC LaunchPad
-env = Environment(latitude=55.433316, longitude= -5.699037, elevation=0)
+env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
 
 launchday = datetime.date.today() + datetime.timedelta(days=1)
 
@@ -48,6 +48,8 @@ dry_mass = 5.978
 radius = 8 / 200
 Ixx = 0.25 * dry_mass * radius**2 + 1/12 * dry_mass * length**2
 Irr = 0.5 * dry_mass * radius**2
+main_diameter = 66 / 100
+drogue_diameter = 38.1 / 100
 
 
 Pro54K1440 = SolidMotor(
@@ -104,14 +106,14 @@ buttons = strath.set_rail_buttons(
 
 drogue = strath.add_parachute(
     name="drogue",
-    cd_s=0.8,
+    cd_s=0.8 * 3.1415926 * drogue_diameter,
     trigger="apogee",
     
 )
 
 main = strath.add_parachute(
     name="main",
-    cd_s=0.8,
+    cd_s=0.8 * 3.1415926 * main_diameter,
     trigger=300,
 
 )
@@ -139,3 +141,8 @@ test_flight = Flight(
 )
 #print("Test Flight Info")
 test_flight.plots.trajectory_3d()
+test_flight.export_kml(
+    file_name="trajectory.kml",
+    extrude=True,
+    altitude_mode="relative_to_ground",
+)
