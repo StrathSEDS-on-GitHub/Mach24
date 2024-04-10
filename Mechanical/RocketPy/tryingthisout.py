@@ -23,7 +23,7 @@ env.set_atmospheric_model(
 #env.info()
 
 #Info from OR
-length = 1.73
+length = 1.93
 centre_of_mass = 1.02
 
 
@@ -49,13 +49,14 @@ Pro54K1440 = SolidMotor(
 )
 
 payload_mass = 1
-dry_mass = 5.26
+vehicle_mass = 5.26
 
-vehicle_mass = dry_mass - payload_mass
+total_mass = vehicle_mass + payload_mass
 
 radius = 8 / 200
-Ixx = 0.25 * dry_mass * radius**2 + 1/12 * dry_mass * length**2
-Irr = 0.5 * dry_mass * radius**2
+
+Ixx = 0.25 * total_mass * radius**2 + 1/12 * total_mass * length**2
+Irr = 0.5 * total_mass * radius**2
 main_diameter = 75 / 100
 drogue_diameter = 40 / 100
 
@@ -63,7 +64,7 @@ drogue_diameter = 40 / 100
 
 strath_with_payload = Rocket(
     radius=80 / 2000,
-    mass=dry_mass,
+    mass=total_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
     power_off_drag="./data/powerOffDragCurve.CSV",
@@ -187,7 +188,7 @@ comparison = CompareFlights(
     [stage_one, stage_two, payload_flight]
 )
 
-comparison.trajectories_2d(plane="xz",legend=True)
+comparison.trajectories_3d(legend=True)
 
 stage_one.export_kml(
     file_name="ascent.kml",
@@ -204,5 +205,3 @@ payload_flight.export_kml(
     extrude=True,
     altitude_mode="relative_to_ground"
 )
-
-stage_one.info()
