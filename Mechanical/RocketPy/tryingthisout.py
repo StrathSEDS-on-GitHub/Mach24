@@ -16,7 +16,7 @@ env.set_atmospheric_model(
     
     pressure=None,
     temperature=300,
-    wind_u=[(0,5), (500,10)], #Positive for East, Negative for West
+    wind_u=[(0,10), (500,10)], #Positive for East, Negative for West
     wind_v=[(0,0.1), (100,0.1)], #Positive for North, Negative for South
 )
 
@@ -30,7 +30,7 @@ centre_of_mass = 1.02
 ### Motor Setup ###
 
 Pro54K1440 = SolidMotor(
-    thrust_source="./Mechanical/RocketPy/data/Cesaroni_K1440.eng",     #import
+    thrust_source="./data/Cesaroni_K1440.eng",     #import
     dry_mass=0.7302,
     dry_inertia=(0,0,0),
     nozzle_radius=52 / 2000,                #find
@@ -66,8 +66,8 @@ strath_with_payload = Rocket(
     mass=vehicle_mass + payload_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
-    power_off_drag="./Mechanical/RocketPy/data/powerOffDragCurve.CSV",
-    power_on_drag="./Mechanical/RocketPy/data/powerOnDragCurve.CSV",
+    power_off_drag="./data/powerOffDragCurve.CSV",
+    power_on_drag="./data/powerOnDragCurve.CSV",
     coordinate_system_orientation="tail_to_nose",
 )
 
@@ -76,8 +76,8 @@ strath_without_payload = Rocket(
     mass=vehicle_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
-    power_off_drag="./Mechanical/RocketPy/data/powerOffDragCurve.CSV",
-    power_on_drag="./Mechanical/RocketPy/data/powerOnDragCurve.CSV",
+    power_off_drag="./data/powerOffDragCurve.CSV",
+    power_on_drag="./data/powerOnDragCurve.CSV",
     coordinate_system_orientation="tail_to_nose",
 )
 
@@ -187,7 +187,7 @@ comparison = CompareFlights(
     [stage_one, stage_two, payload_flight]
 )
 
-comparison.trajectories_3d(legend=True)
+comparison.trajectories_2d(plane="xz",legend=True)
 
 stage_one.export_kml(
     file_name="ascent.kml",
