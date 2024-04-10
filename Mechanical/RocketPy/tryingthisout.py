@@ -49,21 +49,21 @@ Pro54K1440 = SolidMotor(
 )
 
 payload_mass = 1
-dry_mass = 5.978
+dry_mass = 5.26
 
 vehicle_mass = dry_mass - payload_mass
 
 radius = 8 / 200
 Ixx = 0.25 * dry_mass * radius**2 + 1/12 * dry_mass * length**2
 Irr = 0.5 * dry_mass * radius**2
-main_diameter = 66 / 100
-drogue_diameter = 38.1 / 100
+main_diameter = 75 / 100
+drogue_diameter = 40 / 100
 
 ### Vehicle Setup ###
 
 strath_with_payload = Rocket(
     radius=80 / 2000,
-    mass=vehicle_mass + payload_mass,
+    mass=dry_mass,
     center_of_mass_without_motor=0,
     inertia= (Ixx,Ixx,Irr),
     power_off_drag="./data/powerOffDragCurve.CSV",
@@ -123,7 +123,7 @@ drogue = strath_without_payload.add_parachute(
 main = strath_without_payload.add_parachute(
     name="main",
     cd_s=0.8 * 3.1415926 * (main_diameter/2)**2,
-    trigger=300,
+    trigger=500,
 
 )
 
@@ -140,7 +140,7 @@ cansat = Rocket(
 
 cansast_chute = cansat.add_parachute(
     name = "cansat parachute",
-    cd_s = 0.8 * 3.1415926 * (0.15/2)**2,
+    cd_s = 0.8 * 3.1415926 * (0.40/2)**2,
     trigger = "apogee",
     sampling_rate = 105,
     lag = 1.5,
@@ -153,8 +153,8 @@ stage_one = Flight(
     name="Ascent",
     environment=env,
     rail_length=2,
-    inclination=90,
-    heading=0,
+    inclination=85,
+    heading=270,
     terminate_on_apogee = True,
 )
 
@@ -204,3 +204,5 @@ payload_flight.export_kml(
     extrude=True,
     altitude_mode="relative_to_ground"
 )
+
+stage_one.info()
