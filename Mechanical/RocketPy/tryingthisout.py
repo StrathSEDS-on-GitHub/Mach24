@@ -1,6 +1,7 @@
 from rocketpy import Environment, SolidMotor, Rocket, Flight
 from rocketpy.plots.compare import CompareFlights
 import datetime
+import csv
 
 # Initialise MACC LaunchPad
 env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
@@ -10,21 +11,21 @@ launchday = datetime.date.today() + datetime.timedelta(days=1)
 
 env.set_date( (launchday.year, launchday.month, launchday.day, 9) )
 
-env.set_atmospheric_model(
-    # type="Forecast", file="GFS"
-    type="custom_atmosphere",
+# env.set_atmospheric_model(
+#     # type="Forecast", file="GFS"
+#     type="custom_atmosphere",
     
-    pressure=None,
-    temperature=300,
-    wind_u=[(0,10), (500,10)], #Positive for East, Negative for West
-    wind_v=[(0,0.1), (100,0.1)], #Positive for North, Negative for South
-)
+#     pressure=None,
+#     temperature=300,
+#     wind_u=[(0,10), (500,10)], #Positive for East, Negative for West
+#     wind_v=[(0,0.1), (100,0.1)], #Positive for North, Negative for South
+# )
 
 #env.info()
 
 #Info from OR
-length = 1.93
-centre_of_mass = 1.02
+length = 1.98
+centre_of_mass = 1.14
 
 
 ### Motor Setup ###
@@ -48,7 +49,7 @@ Pro54K1440 = SolidMotor(
     coordinate_system_orientation="nozzle_to_combustion_chamber"
 )
 
-payload_mass = 1
+payload_mass = 1.2
 vehicle_mass = 5.26
 
 total_mass = vehicle_mass + payload_mass
@@ -149,31 +150,32 @@ cansast_chute = cansat.add_parachute(
 
 ### Simulations ###
 
-stage_one = Flight(
-    rocket=strath_with_payload,
-    name="Ascent",
-    environment=env,
-    rail_length=2,
-    inclination=85,
-    heading=270,
-    terminate_on_apogee = True,
-)
+# stage_one = Flight(
+#     rocket=strath_with_payload,
+#     name="Ascent",
+#     environment=env,
+#     rail_length=2,
+#     inclination=85,
+#     heading=270,
+#     terminate_on_apogee = True,
+# )
 
-stage_two = Flight(
-    rocket=strath_without_payload,
-    name="Rocket Descent",
-    environment=env,
-    rail_length=2,
-    initial_solution=stage_one,
-)
+# stage_two = Flight(
+#     rocket=strath_without_payload,
+#     name="Rocket Descent",
+#     environment=env,
+#     rail_length=2,
+#     initial_solution=stage_one,
+# )
 
-payload_flight = Flight(
-    rocket = cansat,
-    name="Payload Descent",
-    environment = env,
-    rail_length=2,
-    initial_solution = stage_one,
-)
+# payload_flight = Flight(
+#     rocket = cansat,
+#     name="Payload Descent",
+#     environment = env,
+#     rail_length=2,
+#     initial_solution = stage_one,
+# )
+
 #print("Test Flight Info")
 # test_flight.plots.trajectory_3d()
 # test_flight.export_kml(
@@ -184,24 +186,75 @@ payload_flight = Flight(
 
 ### Display Flight Sim ###
 
-comparison = CompareFlights(
-    [stage_one, stage_two, payload_flight]
-)
+# comparison = CompareFlights(
+#     [stage_one, stage_two, payload_flight]
+# )
 
-comparison.trajectories_3d(legend=True)
+# comparison.trajectories_3d(legend=True)
 
-stage_one.export_kml(
-    file_name="ascent.kml",
-    extrude=True,
-    altitude_mode="relative_to_ground"
-)
-stage_two.export_kml(
-    file_name="descent.kml",
-    extrude=True,
-    altitude_mode="relative_to_ground"
-)
-payload_flight.export_kml(
-    file_name="payload.kml",
-    extrude=True,
-    altitude_mode="relative_to_ground"
-)
+# stage_one.export_data(file_name="ascent.csv")
+
+# stage_one.export_kml(
+#     file_name="ascent.kml",
+#     extrude=True,
+#     altitude_mode="relative_to_ground"
+# )
+# stage_two.export_kml(
+#     file_name="descent.kml",
+#     extrude=True,
+#     altitude_mode="relative_to_ground"
+# )
+# payload_flight.export_kml(
+#     file_name="payload.kml",
+#     extrude=True,
+#     altitude_mode="relative_to_ground"
+# )
+with open('payload_impact.csv', 'w', newline='') as csvfile:
+    fieldnames = ['wind_speed', 'launch_angle', 'impact_distance']
+    csvwriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    for i in range(20):
+        for j in range(5):
+
+            wind = i
+            angle = j*5
+
+            env.set_atmospheric_model(
+                # type="Forecast", file="GFS"
+                type="custom_atmosphere",
+                
+                pressure=None,
+                temperature=300,
+                wind_u= wind, #Positive for East, Negative for West
+                #wind_v = [], #Positive for North, Negative for South
+            )
+
+            stage_one = Flight(
+                rocket=strath_with_payload,
+                name="Ascent",
+                environment=env,
+                rail_length=2,
+                inclination=90 - angle,
+                heading=270,
+                terminate_on_apogee = True,
+            )
+
+            stage_two = Flight(
+                rocket=strath_without_payload,
+                name="Rocket Descent",
+                environment=env,
+                rail_length=2,
+                initial_solution=stage_one,
+            )
+
+            payload_flight = Flight(
+                rocket = cansat,
+                name="Payload Descent",
+                environment = env,
+                rail_length=2,
+                initial_solution = stage_one,
+            )
+
+            #print("\n wind speed " + str(wind) + "\n angle " + str(angle) + "\n distance " + str(stage_two.x_impact) + "\n cansat landing speed" + str(payload_flight.impact_velocity))
+            csvwriter.writerow({'wind_speed': wind, 'launch_angle': angle, 'impact_distance': payload_flight.x_impact})
+    print("done!")
