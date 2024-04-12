@@ -2,11 +2,13 @@ from rocketpy import Environment, SolidMotor, Rocket, Flight
 from rocketpy.plots.compare import CompareFlights
 import datetime
 import csv
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Initialise MACC LaunchPad
 env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
 
-#launchday = (2024, 7, 10, 12) Approximate 
+#launchday = (2024, 7, 10, 12) #Approximate 
 launchday = datetime.date.today() + datetime.timedelta(days=1)
 
 env.set_date( (launchday.year, launchday.month, launchday.day, 9) )
@@ -209,15 +211,23 @@ cansast_chute = cansat.add_parachute(
 #     extrude=True,
 #     altitude_mode="relative_to_ground"
 # )
+number_of_speeds = 10
+max_speed = 10
+
+number_of_angles = 4
+max_angle = 20
+
+matrix = []
+
 with open('payload_impact.csv', 'w', newline='') as csvfile:
     fieldnames = ['wind_speed', 'launch_angle', 'impact_distance']
     csvwriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-    for i in range(20):
-        for j in range(5):
+    for i in range(number_of_speeds + 1):
+        for j in range(number_of_angles + 1):
 
-            wind = i
-            angle = j*5
+            wind = i*max_speed/number_of_speeds
+            angle = j*max_angle/number_of_angles
 
             env.set_atmospheric_model(
                 # type="Forecast", file="GFS"
@@ -239,13 +249,13 @@ with open('payload_impact.csv', 'w', newline='') as csvfile:
                 terminate_on_apogee = True,
             )
 
-            stage_two = Flight(
-                rocket=strath_without_payload,
-                name="Rocket Descent",
-                environment=env,
-                rail_length=2,
-                initial_solution=stage_one,
-            )
+            # stage_two = Flight(
+            #     rocket=strath_without_payload,
+            #     name="Rocket Descent",
+            #     environment=env,
+            #     rail_length=2,
+            #     initial_solution=stage_one,
+            # )
 
             payload_flight = Flight(
                 rocket = cansat,
@@ -255,6 +265,19 @@ with open('payload_impact.csv', 'w', newline='') as csvfile:
                 initial_solution = stage_one,
             )
 
-            #print("\n wind speed " + str(wind) + "\n angle " + str(angle) + "\n distance " + str(stage_two.x_impact) + "\n cansat landing speed" + str(payload_flight.impact_velocity))
-            csvwriter.writerow({'wind_speed': wind, 'launch_angle': angle, 'impact_distance': payload_flight.x_impact})
+            impact_location = (payload_flight.x_impact**2+payload_flight.y_impact**2)**0.5
+            csvwriter.writerow({'wind_speed': wind, 'launch_angle': angle, 'impact_distance': impact_location})
+            matrix.append( (wind, angle, impact_location) )
     print("done!")
+
+fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+zipped_matrix = zip(*matrix)
+
+X = np.arange(zipped_matrix[0])
+Y = np.arange(zipped_matrix[1])
+X, Y = np.meshgrid(X, Y)
+
+Z = zipped_matrix[2]
+
+plt.show()
