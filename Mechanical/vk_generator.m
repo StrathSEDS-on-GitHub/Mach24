@@ -2,10 +2,10 @@ clear
 %% Input variables of rocket dimensions in mm
 
 %diameter at base of nosecone
-nose_base_diameter = 131;
+nose_base_diameter = 80; %mm
 
 %total length of nosecone
-nose_length = 350;
+nose_length = 300; %mm
 
 %nose shape parameter, find out more online if you are curious
 shape_parameter = 0;
