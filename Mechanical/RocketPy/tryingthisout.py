@@ -4,6 +4,8 @@ import datetime
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import tkinter
+from tqdm import tqdm
 
 # Initialise MACC LaunchPad
 env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
@@ -29,6 +31,8 @@ env.set_date( (launchday.year, launchday.month, launchday.day, 9) )
 length = 1.98
 centre_of_mass = 1.14
 
+#From Rules
+max_drift = 1500
 
 ### Motor Setup ###
 
@@ -150,134 +154,94 @@ cansast_chute = cansat.add_parachute(
     lag = 1.5,
 )
 
-### Simulations ###
-
-# stage_one = Flight(
-#     rocket=strath_with_payload,
-#     name="Ascent",
-#     environment=env,
-#     rail_length=2,
-#     inclination=85,
-#     heading=270,
-#     terminate_on_apogee = True,
-# )
-
-# stage_two = Flight(
-#     rocket=strath_without_payload,
-#     name="Rocket Descent",
-#     environment=env,
-#     rail_length=2,
-#     initial_solution=stage_one,
-# )
-
-# payload_flight = Flight(
-#     rocket = cansat,
-#     name="Payload Descent",
-#     environment = env,
-#     rail_length=2,
-#     initial_solution = stage_one,
-# )
-
-#print("Test Flight Info")
-# test_flight.plots.trajectory_3d()
-# test_flight.export_kml(
-#     file_name="trajectory.kml",
-#     extrude=True,
-#     altitude_mode="relative_to_ground",
-# )
-
-### Display Flight Sim ###
-
-# comparison = CompareFlights(
-#     [stage_one, stage_two, payload_flight]
-# )
-
-# comparison.trajectories_3d(legend=True)
-
-# stage_one.export_data(file_name="ascent.csv")
-
-# stage_one.export_kml(
-#     file_name="ascent.kml",
-#     extrude=True,
-#     altitude_mode="relative_to_ground"
-# )
-# stage_two.export_kml(
-#     file_name="descent.kml",
-#     extrude=True,
-#     altitude_mode="relative_to_ground"
-# )
-# payload_flight.export_kml(
-#     file_name="payload.kml",
-#     extrude=True,
-#     altitude_mode="relative_to_ground"
-# )
-number_of_speeds = 10
+number_of_speeds = 6 # add one to desired number
 max_speed = 10
 
-number_of_angles = 4
+number_of_angles = 5
 max_angle = 20
 
-matrix = []
+vehicle_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
+payload_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
+
+for i in tqdm(range(number_of_speeds)):
+    for j in tqdm(range(number_of_angles), leave = False):
+
+        wind = i*max_speed/number_of_speeds
+        angle = j*max_angle/number_of_angles
+
+        env.set_atmospheric_model(
+            # type="Forecast", file="GFS"
+            type="custom_atmosphere",
+            
+            pressure=None,
+            temperature=300,
+            wind_u= wind, #Positive for East, Negative for West
+            #wind_v = [], #Positive for North, Negative for South
+        )
+
+        # Simulate ascent with payload
+
+        ascent = Flight(
+            rocket=strath_with_payload,
+            name="Ascent",
+            environment=env,
+            rail_length=2,
+            inclination=90 - angle,
+            heading=270,
+            terminate_on_apogee = True,
+        )
+
+        # Simulate descent for vehicle without payload
+
+        descent = Flight(
+            rocket=strath_without_payload,
+            name="Rocket Descent",
+            environment=env,
+            rail_length=2,
+            initial_solution=ascent,
+        )
+
+        # Save impact distances from simulation in a matrix - will store in CSV later
+
+        vehicle_impact_distance = (descent.x_impact**2 + descent.y_impact**2)**0.5
+        vehicle_impact_matrix[i][j] = vehicle_impact_distance
+
+        payload_flight = Flight(
+            rocket = cansat,
+            name="Payload Descent",
+            environment = env,
+            rail_length=2,
+            initial_solution = ascent,
+        )
+
+        payload_impact_distance = (payload_flight.x_impact**2+payload_flight.y_impact**2)**0.5
+        payload_impact_matrix[i][j] = payload_impact_distance
+
+with open('vehicle_impact.csv', 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(["Wind Speed", 0, 5, 10, 15, 20])
+    for i in range(len(vehicle_impact_matrix)):
+        csvwriter.writerow([i*max_speed/number_of_speeds, vehicle_impact_matrix[i][0], vehicle_impact_matrix[i][1], vehicle_impact_matrix[i][2], vehicle_impact_matrix[i][3], vehicle_impact_matrix[i][4]] )
 
 with open('payload_impact.csv', 'w', newline='') as csvfile:
-    fieldnames = ['wind_speed', 'launch_angle', 'impact_distance']
-    csvwriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(["Wind Speed", 0, 5, 10, 15, 20])
+    for i in range(len(payload_impact_matrix)):
+        csvwriter.writerow([i*max_speed/number_of_speeds, payload_impact_matrix[i][0], payload_impact_matrix[i][1], payload_impact_matrix[i][2], payload_impact_matrix[i][3], payload_impact_matrix[i][4]] )
 
-    for i in range(number_of_speeds + 1):
-        for j in range(number_of_angles + 1):
+payload_impact_window = tkinter.Tk()
 
-            wind = i*max_speed/number_of_speeds
-            angle = j*max_angle/number_of_angles
+labels = np.zeros((len(payload_impact_matrix), len(payload_impact_matrix[0])), dtype=tkinter.Label)
+for i in range(len(payload_impact_matrix)):
+    for j in range(len(payload_impact_matrix[0])):
+        colour = ""
+        if payload_impact_matrix[i][j] > max_drift:
+            colour = "red"
+        elif payload_impact_matrix[i][j] > max_drift/2:
+            colour = "yellow"
+        else:
+            colour = "green"
+        labels[i][j] = tkinter.Label(text = round(payload_impact_matrix[i][j]), bg = colour, fg = "black", width = 50, height=50)
+        labels[i][j].place(x=i*50, y=j*50)
 
-            env.set_atmospheric_model(
-                # type="Forecast", file="GFS"
-                type="custom_atmosphere",
-                
-                pressure=None,
-                temperature=300,
-                wind_u= wind, #Positive for East, Negative for West
-                #wind_v = [], #Positive for North, Negative for South
-            )
-
-            stage_one = Flight(
-                rocket=strath_with_payload,
-                name="Ascent",
-                environment=env,
-                rail_length=2,
-                inclination=90 - angle,
-                heading=270,
-                terminate_on_apogee = True,
-            )
-
-            # stage_two = Flight(
-            #     rocket=strath_without_payload,
-            #     name="Rocket Descent",
-            #     environment=env,
-            #     rail_length=2,
-            #     initial_solution=stage_one,
-            # )
-
-            payload_flight = Flight(
-                rocket = cansat,
-                name="Payload Descent",
-                environment = env,
-                rail_length=2,
-                initial_solution = stage_one,
-            )
-
-            impact_location = (payload_flight.x_impact**2+payload_flight.y_impact**2)**0.5
-            csvwriter.writerow({'wind_speed': wind, 'launch_angle': angle, 'impact_distance': impact_location})
-            matrix.append( (wind, angle, impact_location) )
-    print("done!")
-
-fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-
-zipped_matrix = zip(*matrix)
-
-X = np.arange(zipped_matrix[0])
-Y = np.arange(zipped_matrix[1])
-X, Y = np.meshgrid(X, Y)
-
-Z = zipped_matrix[2]
-
-plt.show()
+payload_impact_window.mainloop()
