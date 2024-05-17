@@ -154,13 +154,14 @@ cansast_chute = cansat.add_parachute(
     lag = 1.5,
 )
 
-number_of_speeds = 6 # add one to desired number
+number_of_speeds = 11 # add one to desired number
 max_speed = 10
-speed_increment = number_of_speeds / max_speed
+speed_increment = max_speed / (number_of_speeds-1)
 
 number_of_angles = 5
 max_angle = 20
-angle_increment = number_of_angles / max_angle
+angle_increment = max_angle/(number_of_angles-1)
+print(angle_increment)
 
 vehicle_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
 payload_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
@@ -221,71 +222,114 @@ for i in tqdm(range(number_of_speeds)):
 
 with open('vehicle_impact.csv', 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(["Wind Speed", 0, 5, 10, 15, 20])
     for i in range(len(vehicle_impact_matrix)):
-        csvwriter.writerow([i*max_speed/number_of_speeds, vehicle_impact_matrix[i][0], vehicle_impact_matrix[i][1], vehicle_impact_matrix[i][2], vehicle_impact_matrix[i][3], vehicle_impact_matrix[i][4]] )
+        csvwriter.writerow([vehicle_impact_matrix[i][0], vehicle_impact_matrix[i][1], vehicle_impact_matrix[i][2], vehicle_impact_matrix[i][3], vehicle_impact_matrix[i][4]] )
 
 with open('payload_impact.csv', 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(["Wind Speed", 0, 5, 10, 15, 20])
     for i in range(len(payload_impact_matrix)):
-        csvwriter.writerow([i*max_speed/number_of_speeds, payload_impact_matrix[i][0], payload_impact_matrix[i][1], payload_impact_matrix[i][2], payload_impact_matrix[i][3], payload_impact_matrix[i][4]] )
+        csvwriter.writerow([payload_impact_matrix[i][0], payload_impact_matrix[i][1], payload_impact_matrix[i][2], payload_impact_matrix[i][3], payload_impact_matrix[i][4]] )
 
 
-### Tkinter time!!
-window_height = 720
-window_width = round(window_height * 16/9)
+# ### Tkinter time!!
+# window_height = 720
+# window_width = round(window_height * 16/9)
 
-payload_impact_window = tk.Tk()
-geom = str(window_width) + "x" + str(window_height)
-payload_impact_window.geometry(geom)
-
-
-
-#transpose matrix for better display optimisation
-payload_impact_matrix_transposed = np.transpose(payload_impact_matrix)
-
-#remember it's transposed for label settings
-label_width = round(window_width / (number_of_speeds+1))
-label_height = round(window_height / (number_of_angles+1))
-
-payload_labels = np.zeros((len(payload_impact_matrix_transposed)+1, len(payload_impact_matrix_transposed[0])+1), dtype=tk.Label)
-
-#blank cell in top left
-payload_labels[0][0] = tk.Label(payload_impact_window, bg = "black", width = label_width, height = label_height, bd=2, relief = "solid")
-
-#wind speeds
-for j in range(number_of_speeds):
-    textvar = tk.StringVar()
-    textvar.set(str(j*speed_increment) + " m/s")
-    payload_labels[0][j+1] = tk.Label(payload_impact_window, textvariable = textvar, bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
-
-#launch angles
-for i in range(number_of_angles):
-    textvar = tk.StringVar()
-    textvar.set(str(i*angle_increment) + "°")
-    payload_labels[i+1][0] = tk.Label(payload_impact_window, textvariable = textvar, font=("Arial",1), bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
+# payload_impact_window = tk.Tk()
+# geom = str(window_width) + "x" + str(window_height)
+# payload_impact_window.geometry(geom)
 
 
-#contents
-for i in range(len(payload_impact_matrix_transposed)):
-    for j in range(len(payload_impact_matrix_transposed[0])):
-        # bg_colour = ""
-        if payload_impact_matrix_transposed[i][j] > max_drift:
-            bg_colour = "red"
-        elif payload_impact_matrix_transposed[i][j] > max_drift/2:
-            bg_colour = "yellow"
-        else:
-            bg_colour = "green"
 
-        textvar = tk.StringVar()
-        textvar.set(str(round(payload_impact_matrix_transposed[i][j])))
-        payload_labels[i+1][j+1] = tk.Label(payload_impact_window, textvariable = textvar, font = ("Arial", 1), fg = "black", bg = bg_colour, width = label_width, height = label_height, bd=2, relief = "solid")
+# #transpose matrix for better display optimisation
+# payload_impact_matrix_transposed = np.transpose(payload_impact_matrix)
 
-print(payload_labels)
-for i in range(len(payload_impact_matrix_transposed)):
-    for j in range(len(payload_impact_matrix_transposed[0])):
-        payload_labels[i][j].grid(row = j, column = i, sticky = "")
+# #remember it's transposed for label settings
+# label_width = round(window_width / (number_of_speeds+1))
+# label_height = round(window_height / (number_of_angles+1))
 
-payload_impact_window.mainloop()
-payload_impact_window.update()
+# payload_labels = np.zeros((len(payload_impact_matrix_transposed)+1, len(payload_impact_matrix_transposed[0])+1), dtype=tk.Label)
+
+# #blank cell in top left
+# payload_labels[0][0] = tk.Label(payload_impact_window, bg = "black", width = label_width, height = label_height, bd=2, relief = "solid")
+
+# #wind speeds
+# for j in range(number_of_speeds):
+#     textvar = tk.StringVar()
+#     textvar.set(str(j*speed_increment) + " m/s")
+#     payload_labels[0][j+1] = tk.Label(payload_impact_window, textvariable = textvar, bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
+
+# #launch angles
+# for i in range(number_of_angles):
+#     textvar = tk.StringVar()
+#     textvar.set(str(i*angle_increment) + "°")
+#     payload_labels[i+1][0] = tk.Label(payload_impact_window, textvariable = textvar, font=("Arial",1), bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
+
+
+# #contents
+# for i in range(len(payload_impact_matrix_transposed)):
+#     for j in range(len(payload_impact_matrix_transposed[0])):
+#         # bg_colour = ""
+#         if payload_impact_matrix_transposed[i][j] > max_drift:
+#             bg_colour = "red"
+#         elif payload_impact_matrix_transposed[i][j] > max_drift/2:
+#             bg_colour = "yellow"
+#         else:
+#             bg_colour = "green"
+
+#         textvar = tk.StringVar()
+#         textvar.set(str(round(payload_impact_matrix_transposed[i][j])))
+#         payload_labels[i+1][j+1] = tk.Label(payload_impact_window, textvariable = textvar, font = ("Arial", 1), fg = "black", bg = bg_colour, width = label_width, height = label_height, bd=2, relief = "solid")
+
+# print(payload_labels)
+# for i in range(len(payload_impact_matrix_transposed)):
+#     for j in range(len(payload_impact_matrix_transposed[0])):
+#         payload_labels[i][j].grid(row = j, column = i, sticky = "")
+
+array = payload_impact_matrix
+
+def get_color(value, min_value, max_value):
+    # Normalize the value to be between 0 and 1
+    normalized_value = (value - min_value) / (max_value - min_value)
+    # Interpolate color from green to red
+    red = int(normalized_value * 255)
+    green = int((1 - normalized_value) * 255)
+    color = f'#{red:02x}{green:02x}00'
+    return color
+
+def display_2d_array(array):
+    root = tk.Tk()
+    root.title("2D Array Display")
+
+    rows = len(array)
+    cols = len(array[0]) if rows > 0 else 0
+
+    min_value = min(min(abs(x) for x in row) for row in array)
+    max_value = max(max(abs(x) for x in row) for row in array)
+
+    for i in range(number_of_speeds):
+        speed = i * speed_increment
+        label = tk.Label(root, text=f"{speed} m/s", borderwidth=1, relief="solid", width=15, height=2)
+        label.grid(row=0, column=i+1, padx=2, pady=2)  # Transposed row and column
+
+    # Create the launch angle headers
+    for j in range(cols):
+        angle = angle_increment * j  # Launch angles in 5 degree increments
+        label = tk.Label(root, text=f"{angle}°", borderwidth=1, relief="solid", width=10, height=2)
+        label.grid(row=j+1, column=0, padx=2, pady=2)  # Transposed row and column
+
+    for i in range(rows):
+        for j in range(cols):
+            value = abs(array[i][j])
+            color = get_color(value, min_value, max_value)
+            if value > max_drift:
+                text_color = "white"
+            else:
+                text_color = "black"
+            label = tk.Label(root, text=str(round(array[i][j])), borderwidth=1, relief="solid", width=10, height=2, bg=color, fg=text_color)
+            label.grid(row=j+1, column=i+1, padx=2, pady=2)
+
+    root.mainloop()
+# Main function
+
+display_2d_array(array)
