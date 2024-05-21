@@ -230,63 +230,8 @@ with open('payload_impact.csv', 'w', newline='') as csvfile:
     for i in range(len(payload_impact_matrix)):
         csvwriter.writerow([payload_impact_matrix[i][0], payload_impact_matrix[i][1], payload_impact_matrix[i][2], payload_impact_matrix[i][3], payload_impact_matrix[i][4]] )
 
-
-# ### Tkinter time!!
-# window_height = 720
-# window_width = round(window_height * 16/9)
-
-# payload_impact_window = tk.Tk()
-# geom = str(window_width) + "x" + str(window_height)
-# payload_impact_window.geometry(geom)
-
-
-
-# #transpose matrix for better display optimisation
-# payload_impact_matrix_transposed = np.transpose(payload_impact_matrix)
-
-# #remember it's transposed for label settings
-# label_width = round(window_width / (number_of_speeds+1))
-# label_height = round(window_height / (number_of_angles+1))
-
-# payload_labels = np.zeros((len(payload_impact_matrix_transposed)+1, len(payload_impact_matrix_transposed[0])+1), dtype=tk.Label)
-
-# #blank cell in top left
-# payload_labels[0][0] = tk.Label(payload_impact_window, bg = "black", width = label_width, height = label_height, bd=2, relief = "solid")
-
-# #wind speeds
-# for j in range(number_of_speeds):
-#     textvar = tk.StringVar()
-#     textvar.set(str(j*speed_increment) + " m/s")
-#     payload_labels[0][j+1] = tk.Label(payload_impact_window, textvariable = textvar, bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
-
-# #launch angles
-# for i in range(number_of_angles):
-#     textvar = tk.StringVar()
-#     textvar.set(str(i*angle_increment) + "°")
-#     payload_labels[i+1][0] = tk.Label(payload_impact_window, textvariable = textvar, font=("Arial",1), bg = 'white', fg = 'black', width = label_width, height = label_height, bd=2, relief = "solid")
-
-
-# #contents
-# for i in range(len(payload_impact_matrix_transposed)):
-#     for j in range(len(payload_impact_matrix_transposed[0])):
-#         # bg_colour = ""
-#         if payload_impact_matrix_transposed[i][j] > max_drift:
-#             bg_colour = "red"
-#         elif payload_impact_matrix_transposed[i][j] > max_drift/2:
-#             bg_colour = "yellow"
-#         else:
-#             bg_colour = "green"
-
-#         textvar = tk.StringVar()
-#         textvar.set(str(round(payload_impact_matrix_transposed[i][j])))
-#         payload_labels[i+1][j+1] = tk.Label(payload_impact_window, textvariable = textvar, font = ("Arial", 1), fg = "black", bg = bg_colour, width = label_width, height = label_height, bd=2, relief = "solid")
-
-# print(payload_labels)
-# for i in range(len(payload_impact_matrix_transposed)):
-#     for j in range(len(payload_impact_matrix_transposed[0])):
-#         payload_labels[i][j].grid(row = j, column = i, sticky = "")
-
-array = payload_impact_matrix
+payload_impact_matrix = np.array(payload_impact_matrix)
+vehicle_impact_matrix = np.array(vehicle_impact_matrix)
 
 def get_color(value, min_value, max_value):
     # Normalize the value to be between 0 and 1
@@ -297,39 +242,94 @@ def get_color(value, min_value, max_value):
     color = f'#{red:02x}{green:02x}00'
     return color
 
-def display_2d_array(array):
-    root = tk.Tk()
-    root.title("2D Array Display")
+def get_color_boolean(value):
+    return '#00FF00' if value else '#FF0000'  # Green for True, Red for False
 
+def display_2d_array(array, title):
+    array = np.transpose(array)  # Transpose the array
+    
     rows = len(array)
     cols = len(array[0]) if rows > 0 else 0
 
-    min_value = min(min(abs(x) for x in row) for row in array)
-    max_value = max(max(abs(x) for x in row) for row in array)
+    # Find min and max values in the array
+    min_value = np.min(array)
+    max_value = np.max(array)
 
-    for i in range(number_of_speeds):
-        speed = i * speed_increment
-        label = tk.Label(root, text=f"{speed} m/s", borderwidth=1, relief="solid", width=15, height=2)
-        label.grid(row=0, column=i+1, padx=2, pady=2)  # Transposed row and column
+    fig, ax = plt.subplots()
+    im = ax.imshow(array, cmap='RdYlGn_r', vmin=min_value, vmax=max_value)  # Invert colormap with '_r'
 
-    # Create the launch angle headers
-    for j in range(cols):
-        angle = angle_increment * j  # Launch angles in 5 degree increments
-        label = tk.Label(root, text=f"{angle}°", borderwidth=1, relief="solid", width=10, height=2)
-        label.grid(row=j+1, column=0, padx=2, pady=2)  # Transposed row and column
+    # Create wind speed tick labels
+    speeds = [i * speed_increment for i in range(cols)]
+    plt.xticks(np.arange(cols), speeds)
 
+    # Create launch angle tick labels
+    angles = [i * angle_increment for i in range(rows)]
+    plt.yticks(np.arange(rows), angles)
+
+    # Loop over data dimensions and create text annotations
     for i in range(rows):
         for j in range(cols):
-            value = abs(array[i][j])
+            value = abs(array[i, j])
             color = get_color(value, min_value, max_value)
             if value > max_drift:
                 text_color = "white"
             else:
                 text_color = "black"
-            label = tk.Label(root, text=str(round(array[i][j])), borderwidth=1, relief="solid", width=10, height=2, bg=color, fg=text_color)
-            label.grid(row=j+1, column=i+1, padx=2, pady=2)
+            ax.text(j, i, f'{str(round(array[i, j]))}m', ha='center', va='center', color=text_color)
 
-    root.mainloop()
+    ax.set_title(title)
+    plt.xlabel('Wind Speed (m/s)')  # Update x-axis label
+    plt.ylabel('Launch Angle (°)')  # Update y-axis label
+    plt.show()
+
+def display_2d_boolean_array(array, title):
+    array = np.transpose(array)  # Transpose the array
+    
+    rows = len(array)
+    cols = len(array[0]) if rows > 0 else 0
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(array, cmap='RdYlGn', vmin=0, vmax=1)  # Use 0 and 1 for boolean colormap
+
+    # Create wind speed tick labels
+    speeds = [i * speed_increment for i in range(cols)]
+    plt.xticks(np.arange(cols), speeds)
+
+    # Create launch angle tick labels
+    angles = [i * angle_increment for i in range(rows)]
+    plt.yticks(np.arange(rows), angles)
+
+    # Loop over data dimensions and create text annotations
+    for i in range(rows):
+        for j in range(cols):
+            value = array[i, j]
+            text_color = "white" if value else "black"
+            ax.text(j, i, 'Legal' if value else 'Illegal', ha='center', va='center', color=text_color)
+            
+    ax.set_title(title)
+    plt.xlabel('Wind Speed (m/s)')
+    plt.ylabel('Launch Angle (°)')
+    plt.show()
+
 # Main function
+display_2d_array(payload_impact_matrix, 'Payload Impact')
+display_2d_array(vehicle_impact_matrix, 'Vehicle Impact')
+# display_2d_array(payload_impact_matrix)
 
-display_2d_array(array)
+
+# Initializing the impact_boolean_matrix with the same shape as payload_impact_matrix
+impact_boolean_matrix = np.zeros_like(payload_impact_matrix, dtype=bool)
+
+# Populating the impact_boolean_matrix
+for i in range(payload_impact_matrix.shape[0]):
+    for j in range(payload_impact_matrix.shape[1]):
+        if payload_impact_matrix[i, j] < max_drift and vehicle_impact_matrix[i, j] < max_drift:
+            impact_boolean_matrix[i, j] = True
+        else:
+            impact_boolean_matrix[i, j] = False
+
+# Convert to numpy array for better compatibility with display function
+impact_boolean_matrix = np.array(impact_boolean_matrix)
+
+# Main function
+display_2d_boolean_array(impact_boolean_matrix, 'Is this launch legal?')
