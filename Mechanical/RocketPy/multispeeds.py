@@ -4,8 +4,8 @@ import datetime
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
-import tkinter as tk
 from tqdm import tqdm
+import random
 
 # Initialise MACC LaunchPad
 env = Environment(latitude=55.433982, longitude= -5.696031, elevation=0)
@@ -29,7 +29,7 @@ env.set_date( (launchday.year, launchday.month, launchday.day, 9) )
 
 #Info from OR
 length = 1.98
-centre_of_mass = 1.14
+centre_of_mass = 1.21
 
 #From Rules
 max_drift = 1500
@@ -55,8 +55,8 @@ Pro54K1440 = SolidMotor(
     coordinate_system_orientation="nozzle_to_combustion_chamber"
 )
 
-payload_mass = 1.2
-vehicle_mass = 5.26
+payload_mass = 1.006
+vehicle_mass = 5.658
 
 total_mass = vehicle_mass + payload_mass
 
@@ -165,6 +165,9 @@ print(angle_increment)
 
 vehicle_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
 payload_impact_matrix = np.zeros((number_of_speeds, number_of_angles))
+ascents = np.zeros((number_of_speeds, number_of_angles), dtype=Flight)
+descents = np.zeros((number_of_speeds, number_of_angles), dtype=Flight)
+cansats = np.zeros((number_of_speeds, number_of_angles), dtype=Flight)
 
 for i in tqdm(range(number_of_speeds)):
     for j in tqdm(range(number_of_angles), leave = False):
@@ -184,7 +187,7 @@ for i in tqdm(range(number_of_speeds)):
 
         # Simulate ascent with payload
 
-        ascent = Flight(
+        ascents[i][j] = Flight(
             rocket=strath_with_payload,
             name="Ascent",
             environment=env,
@@ -196,28 +199,30 @@ for i in tqdm(range(number_of_speeds)):
 
         # Simulate descent for vehicle without payload
 
-        descent = Flight(
+        descents[i][j] = Flight(
             rocket=strath_without_payload,
             name="Rocket Descent",
             environment=env,
             rail_length=2,
-            initial_solution=ascent,
+            initial_solution=ascents[i][j],
         )
 
         # Save impact distances from simulation in a matrix - will store in CSV later
 
-        vehicle_impact_distance = (descent.x_impact**2 + descent.y_impact**2)**0.5
+        vehicle_impact_distance = (descents[i][j].x_impact**2 + descents[i][j].y_impact**2)**0.5
         vehicle_impact_matrix[i][j] = vehicle_impact_distance
 
-        payload_flight = Flight(
+        # Do the same for payload descent
+
+        cansats[i][j] = Flight(
             rocket = cansat,
             name="Payload Descent",
             environment = env,
             rail_length=2,
-            initial_solution = ascent,
+            initial_solution = ascents[i][j],
         )
 
-        payload_impact_distance = (payload_flight.x_impact**2+payload_flight.y_impact**2)**0.5
+        payload_impact_distance = (cansats[i][j].x_impact**2+cansats[i][j].y_impact**2)**0.5
         payload_impact_matrix[i][j] = payload_impact_distance
 
 with open('vehicle_impact.csv', 'w', newline='') as csvfile:
@@ -333,3 +338,9 @@ impact_boolean_matrix = np.array(impact_boolean_matrix)
 
 # Main function
 display_2d_boolean_array(impact_boolean_matrix, 'Is this launch legal?')
+
+plotted_windspeed=random.randint(0,number_of_speeds-1)
+plotted_angle=random.randint(0,number_of_angles-1)
+
+print("Plotting data for flight at " + str(plotted_windspeed*speed_increment) + " m/s and " + str(plotted_angle*angle_increment) + " degrees")
+descents[plotted_windspeed][plotted_angle].plots.linear_kinematics_data()
