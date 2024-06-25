@@ -154,8 +154,8 @@ cansast_chute = cansat.add_parachute(
     lag = 1.5,
 )
 
-number_of_speeds = 31 # add one to desired number
-max_speed = 30
+number_of_speeds = 11 # add one to desired number
+max_speed = 10
 speed_increment = max_speed / (number_of_speeds-1)
 
 number_of_angles = 5
